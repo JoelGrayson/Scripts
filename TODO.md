@@ -1,0 +1,4 @@
+- [x] List method
+- [ ] Remove method
+- [ ] Enable method
+- [ ] Disable method

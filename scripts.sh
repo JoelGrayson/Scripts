@@ -3,8 +3,23 @@
 # TODO: allow option to select own editor
 
 scripts() {
+    #* HELPER VARIABLES
     default_language="sh"
     base="$HOME/scripts/"
+
+    #* HELPER FUNCTIONS
+    cmd_exists() {
+        if [ -z "$(command -v $1)" ]; then #check if command exists
+            echo false
+        else
+            echo true
+        fi
+    }
+
+    underline() {
+        echo "\e[4m$1\e[0m" #surround with POSIX chars
+    }
+
 
     #* LOCAL FUNCTIONS
     help() {
@@ -17,50 +32,77 @@ remove"
     add() {        
         name="$1"
         language="$2"
+        filename=""
 
-       case "$language" in
+        case "$language" in
             # Steps for language: create file, fill file, and edit file
-
-           'sh'|'bash'|'shell') # Shell file
+            # Every folder is two characters long
+            'sh'|'bash'|'shell') # Shell file
                 mkdir -p "$base/sh" #-p so only creates dir if not already exists
                 
                 filename="$base/sh/$name.sh"
                 [ -e "$filename" ] && echo "$name already exists" && exit 1 #do not allow already file exists
                 echo -e "#!/bin/bash\n\n" > "$filename" #create file with boiler plate code
-                
-                vim "$filename" #open in vim editor
-           ;;
-           'js'|'javascript'|'node') # Node
+            ;;
+            'js'|'javascript'|'node') # Node
                 mkdir -p "$base/js"
 
                 filename="$base/js/$name.js"
                 [ -e "$filename" ] && echo "$name already exists" && exit 1
                 echo -e "#!/usr/bin/env node\n\n\n" > "$filename"
-
-                vim "$filename"
-           ;;
-           'py'|'python'|'python3') # Python
+            ;;
+            'py'|'python'|'python3') # Python
                 mkdir -p "$base/py"
 
                 filename="$base/py/$name.py"
                 [ -e "$filename" ] && echo "$name already exists" && exit 1
                 echo -e "#!/usr/bin/env python\n\n\n" > "$filename"
+            ;;
+            *)
+                echo "Unknown language: $language"
+                exit 1
+            ;;
+        esac
+        
+        # apply to all files
+        vim "$filename" #open in vim editor
+        source "$filename"
+    }
 
-                vim "$filename"
-           ;;
-           *)
-               echo "Unknown language: $language"
-               exit 1
-           ;;
-       esac
-       
+    disable() {
+        echo disable
+    }
+
+    enable() {
+        echo enable
     }
 
     remove() {
         name="$1"
-
         
     }
+
+    list() {
+        for folder in ~/scripts/*/; do #folder containing all files of a language
+            language=""
+            if [ "$(cmd_exists 'awk')" = true ]; then #use awk if possible
+                language=$(echo "$folder" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
+            else #parse if no support for awk
+                language="${folder: -3: -1}" #last two characters of folder are the language
+            fi
+
+            echo "___$(underline $language)___"
+
+            for file in $folder*; do #`*` for all items within the folder
+                if [ "$(cmd_exists 'awk')" = true ]; then #use awk if possible
+                    echo "$file" | awk -F '/' '{ print $NF }' #only last item
+                else #just show unprocessed file
+                    echo "$file"
+                fi
+            done
+        done
+    }
+    
     
     #* COMMANDS DEFINED
     # Help
