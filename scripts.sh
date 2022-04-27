@@ -19,22 +19,34 @@ remove"
         language="$2"
 
        case "$language" in
+            # Steps for language: create file, fill file, and edit file
+
            'sh'|'bash'|'shell') # Shell file
                 mkdir -p "$base/sh" #-p so only creates dir if not already exists
                 
                 filename="$base/sh/$name.sh"
-                echo -e "#!/bin/bash\n\n" > "$filename"
-                # vim 
+                [ -e "$filename" ] && echo "$name already exists" && exit 1 #do not allow already file exists
+                echo -e "#!/bin/bash\n\n" > "$filename" #create file with boiler plate code
+                
+                vim "$filename" #open in vim editor
            ;;
            'js'|'javascript'|'node') # Node
                 mkdir -p "$base/js"
 
-                # filename="$base/js/$name.js"
+                filename="$base/js/$name.js"
+                [ -e "$filename" ] && echo "$name already exists" && exit 1
+                echo -e "#!/usr/bin/env node\n\n\n" > "$filename"
+
+                vim "$filename"
            ;;
            'py'|'python'|'python3') # Python
                 mkdir -p "$base/py"
 
-                # filename="$base/py/$name.py"
+                filename="$base/py/$name.py"
+                [ -e "$filename" ] && echo "$name already exists" && exit 1
+                echo -e "#!/usr/bin/env python\n\n\n" > "$filename"
+
+                vim "$filename"
            ;;
            *)
                echo "Unknown language: $language"
@@ -68,8 +80,9 @@ remove"
                 add "$2" "$default_language"
             fi
         else
-            echo -e "Please include a name.
-scripts add <name>"
+            echo -e "Please include the script's name and optionally language.
+scripts add <name> <language>"
+            exit 1
         fi
     fi
 
