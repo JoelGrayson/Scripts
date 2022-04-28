@@ -12,8 +12,12 @@ brew install scripts
 # Commands
 scripts list
 scripts add <name> <language>
-scripts has <name>
 scripts remove <name>
+scripts has <name>
+scripts disable <name>
+scripts enable <name>
+scripts edit <name>
+
 
 <language> - sh (bash), zsh, js (node), py (python3)
 

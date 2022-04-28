@@ -5,17 +5,9 @@
 scripts() {
     #* HELPER VARIABLES
     default_language="sh"
-    base="$HOME/scripts/"
+    base="$HOME/scripts"
 
     #* HELPER FUNCTIONS
-    cmd_exists() {
-        if [ -z "$(command -v "$1")" ]; then #check if command exists
-            echo false
-        else
-            echo true
-        fi
-    }
-
     folder_empty() {
         folder="$1"
         
@@ -30,32 +22,15 @@ scripts() {
         echo "\e[4m$1\e[0m" #surround with POSIX chars
     }
 
-    name_from_path() { #echos the command from the file path
-        # Eg: name_from_path /Users/joelgrayson/scripts/py/script.py -> script
-        # Eg: name_from_path -e /Users/joelgrayson/scripts/py/script.py -> script.py
-        u_path="$@[-1]" #last argument; path variable is already taken
-        remove_extension=true
-
-        while getopts ':e' opt; do
-            case "$opt" in
-                e) remove_extension=false ;; #preserve file extension
-                *) echo "Usage: -e for including file extension"
-            esac
-        done
-
-        filename="$(echo "$u_path" | awk -F '/' '{ print $NF }')" #only last item
-        $remove_extension && script_name="${filename%.*}" || script_name="$filename" #remove file extension if any
-
-        echo "$script_name"
-    }
-
 
     #* LOCAL FUNCTIONS
     help() {
-        echo "__Scripts__
+        echo "___$(underline "Scripts")___
 list
-add
-remove"
+add <name> <language>
+remove <name>
+enable <name>
+disable <name>"
     }
 
     add() {        
@@ -70,42 +45,52 @@ remove"
                 mkdir -p "$base/sh" #-p so only creates dir if not already exists
                 
                 filename="$base/sh/$name.sh"
-                [ -e "$filename" ] && echo "$name already exists" && ( exit 1 ) #do not allow already file exists
-                echo -e "#!/bin/bash\n\n" > "$filename" #create file with boiler plate code
+                [ -e "$filename" ] && echo "$name already exists" && return 1 #do not allow already file exists
+                boilerplate="""#!/bin/bash
+
+${name}() {
+    
+}
+"""
+                echo -e "$boilerplate" > "$filename" #create file with boiler plate code
+                vim "+call cursor(4, 5)" "$filename"
             ;;
             'js'|'javascript'|'node') # Node
                 mkdir -p "$base/js"
 
                 filename="$base/js/$name.js"
-                [ -e "$filename" ] && echo "$name already exists" && ( exit 1 )
+                [ -e "$filename" ] && echo "$name already exists" && return 1
                 echo -e "#!/usr/bin/env node\n\n\n" > "$filename"
+
+                vim "$filename" #open in vim editor
             ;;
             'py'|'python'|'python3') # Python
                 mkdir -p "$base/py"
 
                 filename="$base/py/$name.py"
-                [ -e "$filename" ] && echo "$name already exists" && ( exit 1 )
+                [ -e "$filename" ] && echo "$name already exists" && return 1
                 echo -e "#!/usr/bin/env python\n\n\n" > "$filename"
+
+                vim "$filename" #open in vim editor
             ;;
             *)
                 echo "Unknown language: $language"
-                exit 1
+                return 1
             ;;
         esac
         
         # apply to all files
-        vim "$filename" #open in vim editor
         source "$filename"
     }
 
     list() {
-        for folder in $base*/; do #folder containing all files of a language
+        for folder in "$base"/*/; do #folder containing all files of a language
             if ! "$(folder_empty "$folder")"; then #folder has files
                 language=$(echo "$folder" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
                 echo "___$(underline "$language")___"
 
-                for file in $folder*; do #`*` for all items within the folder
-                    name_from_path "$file"
+                for file in "$folder"*; do #`*` for all items within the folder
+                    ./name_from_path.sh "$file"
                 done
             fi
         done
@@ -115,12 +100,12 @@ remove"
         name="$2"
         matched=false
 
-        for folder in $base*/; do
+        for folder in "$base"/*/; do
             if ! "$(folder_empty "$folder")"; then #folder has files
-                for file in $folder*; do
-                    if [ "$name" = "$(name_from_path "$file")" ] && ! $matched; then
+                for file in "$folder"*; do
+                    if [ "$name" = "$(./name_from_path.sh "$file")" ] && ! $matched; then
 
-                        new_name="${file%/*}/<DISABLED> $(name_from_path -e "$file")"
+                        new_name="${file%/*}/<DISABLED> $(./name_from_path.sh -e "$file")"
                         mv "$file" "$new_name"
 
                         matched=true #indicate that a command was removed
@@ -138,10 +123,10 @@ remove"
         name="$2" #target
         matched=false
 
-        for folder in $base*/; do
+        for folder in "$base"/*/; do
             if ! "$(folder_empty "$folder")"; then #folder has files
-                for file in $folder*; do
-                    filename="$(name_from_path "$file")"
+                for file in "$folder"*; do
+                    filename="$(./name_from_path.sh "$file")"
 
                     if [ "$name" = "$filename" ] && ! $matched; then #already enabled
                         echo "$name already enabled"
@@ -151,7 +136,7 @@ remove"
                     if [ "${filename:0:11}" = "<DISABLED> " ]; then #file is disabled
                         script_name="${filename:11}"
 
-                        script_name_with_extension="$(name_from_path -e "$file")"
+                        script_name_with_extension="$(./name_from_path.sh -e "$file")"
                         script_name_with_extension="${script_name_with_extension:11}" #remove `<DISABLED> ` from start of file
 
                         if [ "$script_name" = "$name" ]; then #target found
@@ -173,10 +158,10 @@ remove"
         name="$1"
         matched=false
 
-        for folder in $base*/; do
+        for folder in "$base"/*/; do
             if ! "$(folder_empty "$folder")"; then #folder has files
-                for file in $folder*; do
-                    if [ "$name" = "$(name_from_path "$file")" ] && ! $matched; then
+                for file in "$folder"*; do
+                    if [ "$name" = "$(./name_from_path.sh "$file")" ] && ! $matched; then
 
                         rm "$file";
                         if "$(folder_empty "$folder")"; then #remove folder if empty after script removed
@@ -191,7 +176,7 @@ remove"
 
         if ! $matched; then
             echo "$name script does not exist"
-            (exit 1)
+            return 1
         fi
     }
 
@@ -219,23 +204,25 @@ remove"
         else
             echo -e "Please include the script's name and optionally language.
 scripts add <name> <language>"
-            exit 1
+            return 1
         fi
     fi
 
     # remove | rm - scripts remove <name>
     if [ "$1" = 'remove' ] || [ "$1" = "rm" ]; then
         called=true
-        if [ "$2" != "" ]; then
-            remove "$2"
-        else
-            echo "Please include name of program to remove"
-            (exit 1)
-        fi
+        [ -z "$2" ] && echo "Please include name of program to remove" && return 1 #make sure arguments after 'remove'
+        # echo AFTER
+
+        shift #shift over parameters to remove $1, which is "remove"
+        for to_remove in "$@"; do
+            echo "Remove: $to_remove"
+            # remove "$to_remove"
+        done
     fi
 
     if ! $called; then #no commands triggered
         echo "Invalid command" "$@"
-        (exit 1)
+        return 1
     fi
 }
