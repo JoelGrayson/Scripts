@@ -1,5 +1,6 @@
 - [ ] Has method
 - [ ] Edit method
+- [ ] Uninstall method
 - [ ] Install script
 - [ ] Make sure all scripts all aliased at terminal startup
 
