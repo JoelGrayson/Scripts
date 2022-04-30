@@ -4,7 +4,8 @@
 
 # Eg: name_from_path /Users/joelgrayson/scripts/py/script.py -> script
 # Eg: name_from_path -e /Users/joelgrayson/scripts/py/script.py -> script.py
-u_path="$@[-1]" #last argument; path variable is already taken
+
+u_path="${@: -1}" #last argument; path variable is already taken
 remove_extension=true
 
 while getopts ':e' opt; do
@@ -14,7 +15,8 @@ while getopts ':e' opt; do
     esac
 done
 
+echo $u_path
 filename="$(echo "$u_path" | awk -F '/' '{ print $NF }')" #only last item
-$remove_extension && script_name="${filename%.*}" || script_name="$filename" #remove file extension if any
 
-echo "$script_name"
+$remove_extension && echo "${filename%.*}" || echo "$filename" #remove file extension if any
+
