@@ -7,27 +7,31 @@ main() {
     base="$HOME/scripts"
     src="$base/_src"
 
-    #* SHELL - source file if not `<DISABLED> `
-    if [ -d "$base/sh" ]; then #directory exists
-        if ! "$("$src/helpers/folder_empty.sh" "$base/sh/")"; then #directory not empty
-            for f in "$base"/sh/*; do #loop through directory
-                name="$(./helpers/name_from_path.sh "$f")"
-                [ "${name:0:11}" != "<DISABLED> " ] && source "$f" #source if not disabled
+    source "$src/scripts.sh" #enable `scripts` command
+
+
+    # Everything is alias
+    for folder_path in "$base"/*/; do #folder_path containing all files of a language
+        # Language of folder
+        folder_name=$(echo "$folder_path" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
+
+        if [ "$folder_name" != '_src' ] && ! "$("$src/helpers/folder_empty.sh" "$folder_path")"; then #folder_path has files & ignore _src
+            for file_path in "$folder_path"*; do #`*` for all items within the folder_path
+                name="$("$src/helpers/name_from_path.sh" "$file_path")"
+
+                chmod +x "$file_path"
+
+                # Alias through sourcing
+                temp_file_name="$src/helpers/aliases/tmp.sh"
+                echo "#!/bin/bash
+alias '$name'='$file_path' #alias name of command (filename) to absolute path
+" > "$temp_file_name"
+                chmod +x "$temp_file_name"
+                source "$temp_file_name"
+                
             done
         fi
-    fi
-
-    #* NODE - alias name of file to absolute path of file
-    if [ -d "$base/js" ]; then #directory exists
-        if ! "$("$src/helpers/folder_empty.sh" "$base/js/")"; then
-            for f in "$base"/js/*; do
-                name="$("$src/helpers/name_from_path.sh" "$f")"
-                [ "${name:0:11}" != "<DISABLED> " ] && alias "$name"="$f"
-            done
-        fi
-    fi
-
-    #* PYTHON
+    done
 }
 
 main "$@"

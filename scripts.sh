@@ -9,66 +9,40 @@ scripts() {
     src="$base/_src"
 
     #* HELPER FUNCTIONS
-    underline() {
-        echo "\e[4m$1\e[0m" #surround with POSIX chars
+    underline() { #str -> ___s_t_r___ (underline and surround with ___)
+        echo "___\e[4m$1\e[0m___" #surround with POSIX chars
     }
 
     #* LOCAL FUNCTIONS
     help() {
-        echo "___$(underline "Scripts")___
+        echo "$(underline "Scripts")
 Usage: scripts <command>
 
 Commands:
    list                    Show all commands
    add <name> <language>   Create your own command
    remove <name>           Remove a command
+   edit <name>             Edit your command
    enable <name>           Enable a disabled command
    disable <name>          Temporarily disable a command
+   languages               Shows all available languages
+   languages add <name>    Add configuration for another language (in .j file)
+   version                 Show version when installed
 "
     }
 
     add() {        
         name="$1"
         language="$2"
-        filename=""
 
-        case "$language" in
-            # Steps for language: create file, fill file, and edit file
-            # Every folder is two characters long
-            'sh'|'bash'|'shell') # Shell file
-                mkdir -p "$base/sh" #-p so only creates dir if not already exists
-                
-                filename="$base/sh/$name.sh"
-                [ -e "$filename" ] && echo "$name already exists" && return 1 #do not allow already file exists
-                
-                ./languages/j_create.sh "$filename" "bash" "$name"
-            ;;
-            'js'|'javascript'|'node') # Node
-                mkdir -p "$base/js"
-
-                filename="$base/js/$name.js"
-                [ -e "$filename" ] && echo "$name already exists" && return 1
-                echo -e "#!/usr/bin/env node\n\n\n" > "$filename"
-
-                vim "$filename" #open in vim editor
-            ;;
-            'py'|'python'|'python3') # Python
-                mkdir -p "$base/py"
-
-                filename="$base/py/$name.py"
-                [ -e "$filename" ] && echo "$name already exists" && return 1
-                echo -e "#!/usr/bin/env python\n\n\n" > "$filename"
-
-                vim "$filename" #open in vim editor
-            ;;
-            *)
-                echo "Unknown language: $language"
-                return 1
-            ;;
-        esac
+        mkdir -p "$base/$language" #-p so only creates dir if not already exists
         
-        # apply to all files
-        source "$filename"
+        filename="$base/$language/$name" #no file extension for simplicity
+        [ -e "$filename" ] && echo "$name already exists" && return 1 #do not allow already file exists
+        
+        "$src/languages/j_create.sh" "$filename" "$language" "$name"
+
+        source "$filename" #temporarily source for current session
     }
 
     edit() {
@@ -81,7 +55,7 @@ Commands:
             folder_name=$(echo "$folder_path" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
 
             if [ "$folder_name" != '_src' ] && ! "$("$src/helpers/folder_empty.sh" "$folder_path")"; then #folder_path has files & ignore _src
-                echo "___$(underline "$folder_name")___"
+                underline "$folder_name"
 
                 for file in "$folder_path"*; do #`*` for all items within the folder_path
                     "$src/helpers/name_from_path.sh" "$file"
@@ -104,7 +78,11 @@ Commands:
 
                         matched=true #indicate that a command was removed
 
-                        alias "$name"="" #temporarily removes the command from session
+                        temp_file_name="$src/helpers/aliases/tmp.sh"
+                        echo "#!/bin/bash
+unalias $name" > "$temp_file_name"
+                        chmod +x "$temp_file_name"
+                        source "$temp_file_name" #temporarily removes the command from session
                     fi
                 done
             fi
@@ -153,7 +131,7 @@ Commands:
         matched=false
 
         for folder in "$base"/*/; do
-            if ! "$("$src/helpers/folder_empty" "$folder")"; then #folder has files
+            if ! "$("$src/helpers/folder_empty.sh" "$folder")"; then #folder has files
                 for file in "$folder"*; do
                     if [ "$name" = "$("$src/helpers/name_from_path.sh" "$file")" ] && ! $matched; then
 
@@ -174,8 +152,29 @@ Commands:
         fi
     }
 
-    uninstall() {
-        rm -rf "$base"
+    # Language support
+    list_languages() {
+        underline Languages
+        for f in "$src"/languages/templates/*.j; do
+            echo "${f%*.j}" | awk -F '/' '{print $NF}'
+        done
+    }
+
+    add_language() {
+        name="$1"
+        filename="$src/languages/templates/$name.j"
+        touch "$filename"
+        vim "$filename"
+    }
+
+    remove_language() {
+        name="$1"
+        filename="$src/languages/templates/$name.j"
+        [ -e "$filename" ] && rm "$filename" && echo "Removed $name.j" || echo "$name.j does not exist in $src/languages/templates/"
+    }
+
+    version() {
+        echo "v1.0.0"
     }
 
     #* COMMANDS DEFINED
@@ -193,8 +192,22 @@ Commands:
     [ "$1" = 'disable' ] && called=true && shift && disable "$@"
     [ "$1" = 'enable' ] && called=true && shift && enable "$@"
 
-    # Uninstall
-    [ "$1" = 'uninstall' ] && called=true && uninstall
+    # Languages
+    if [ "$1" = 'languages' ]; then
+        [ -z "$2" ] || [ "$2" = 'list' ] || [ "$2" = 'ls' ] && called=true && list_languages
+        [ "$2" = 'add' ] && [ "$3" != '' ] && called=true && shift 2 && add_language "$@"
+        [ "$2" = 'remove' ] || [ "$2" = 'rm' ] && [ "$3" != '' ] && called=true && shift 2 && remove_language "$@"
+        
+        # Invalid usage of languages
+        ! $called && echo "Usage: scripts languages <command>
+
+$(underline Commands)
+list           Shows all available languages
+add <name>     Add configuration for another language (in .j file)
+remove <name>  Removes support for a language
+" && return 1 || return 0
+    fi
+
 
     # Add - scripts add <name> <language>
     if [ "$1" = 'add' ]; then
@@ -223,6 +236,11 @@ scripts add <name> <language>"
         done
     fi
 
+    # Version
+    [ "$1" = 'version' ] || [ "$1" = '-v' ] && called=true && version
+
+
+
     #no commands triggered
-    ! $called && echo "Invalid command" "$@" && return 1
+    ! $called && echo "Invalid command" "$@" && return 1 || return 0
 }

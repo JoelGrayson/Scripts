@@ -15,7 +15,6 @@ while getopts ':e' opt; do
     esac
 done
 
-echo $u_path
 filename="$(echo "$u_path" | awk -F '/' '{ print $NF }')" #only last item
 
 $remove_extension && echo "${filename%.*}" || echo "$filename" #remove file extension if any

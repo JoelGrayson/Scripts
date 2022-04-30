@@ -3,3 +3,5 @@
 ${name}() {
     {{CURSOR}}
 }
+
+${name} \"\$@\" #entry point

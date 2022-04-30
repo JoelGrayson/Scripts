@@ -22,6 +22,7 @@ main() {
     "$__dirname/remove_cursor.js" "$boilerplate" > "$filename" #create file with boiler plate code
 
     vim "+call cursor$place" "$filename"
+    chmod +x "$filename"
 }
 
 find_cursor() { # Finds the position of {{CURSOR}}
