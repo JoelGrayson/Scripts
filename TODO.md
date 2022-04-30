@@ -1,3 +1,4 @@
+# New Features
 - [ ] Has method
 - [ ] Edit method
 - [ ] Uninstall method
@@ -10,3 +11,7 @@
 - [x] Remove method
 - [x] Enable method
 - [x] Disable method
+
+# Issues
+`scripts list` throws error for empty scripts directory except _src
+Permissions add (chmod +x)

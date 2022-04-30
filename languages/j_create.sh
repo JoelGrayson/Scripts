@@ -1,25 +1,26 @@
 #!/bin/bash
 
 main() {
-    [ -z "$1" ] || [ "$1" = 'help' ] && echo "j_create <filename> <language> <script name>" && return #no arguments
+    [ -z "$1" ] || [ "$1" = 'help' ] && echo "j_create <filename> <language> <script name>" && return 0 #no arguments
     
     filename="$1"
     language="$2"
     name="$3" #used for preprocessing with `eval`
 
-    raw_boilerplate="$(cat "./templates/${language}.j")"
+    __dirname="${0%/*}"
+
+    raw_boilerplate="$(cat "$__dirname/templates/${language}.j")"
     # Expand variables in .j file such as ${name}
     boilerplate="$(eval """echo \"$raw_boilerplate\"""")" #processed boilerplate
 
     # Find place
-    echo "$boilerplate" > temp
-    place="$(find_cursor ./temp)"
-    rm temp
+    echo "$boilerplate" > "$__dirname/temp"
+    place="$(find_cursor "$__dirname/temp")"
+    rm "$__dirname/temp"
 
     # Remove {{CURSOR}} for real file
-    ./remove_cursor.js "$boilerplate" > "$filename" #create file with boiler plate code
+    "$__dirname/remove_cursor.js" "$boilerplate" > "$filename" #create file with boiler plate code
 
-    echo "Place: $place"
     vim "+call cursor$place" "$filename"
 }
 

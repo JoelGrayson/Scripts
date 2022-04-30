@@ -6,6 +6,7 @@ scripts() {
     #* HELPER VARIABLES
     default_language="sh"
     base="$HOME/scripts"
+    src="$base/_src"
 
     #* HELPER FUNCTIONS
     underline() {
@@ -15,11 +16,15 @@ scripts() {
     #* LOCAL FUNCTIONS
     help() {
         echo "___$(underline "Scripts")___
-list
-add <name> <language>
-remove <name>
-enable <name>
-disable <name>"
+Usage: scripts <command>
+
+Commands:
+   list                    Show all commands
+   add <name> <language>   Create your own command
+   remove <name>           Remove a command
+   enable <name>           Enable a disabled command
+   disable <name>          Temporarily disable a command
+"
     }
 
     add() {        
@@ -35,14 +40,8 @@ disable <name>"
                 
                 filename="$base/sh/$name.sh"
                 [ -e "$filename" ] && echo "$name already exists" && return 1 #do not allow already file exists
-                boilerplate="""#!/bin/bash
-
-${name}() {
-    
-}
-"""
-                echo -e "$boilerplate" > "$filename" #create file with boiler plate code
-                vim "+call cursor(4, 5)" "$filename"
+                
+                ./languages/j_create.sh "$filename" "bash" "$name"
             ;;
             'js'|'javascript'|'node') # Node
                 mkdir -p "$base/js"
@@ -72,14 +71,20 @@ ${name}() {
         source "$filename"
     }
 
-    list() {
-        for folder in "$base"/*/; do #folder containing all files of a language
-            if ! "$(./helpers/folder_empty.sh "$folder")"; then #folder has files
-                language=$(echo "$folder" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
-                echo "___$(underline "$language")___"
+    edit() {
+        echo PASS
+    }
 
-                for file in "$folder"*; do #`*` for all items within the folder
-                    ./helpers/name_from_path.sh "$file"
+    list() {
+        for folder_path in "$base"/*/; do #folder_path containing all files of a language
+            # Language of folder
+            folder_name=$(echo "$folder_path" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
+
+            if [ "$folder_name" != '_src' ] && ! "$("$src/helpers/folder_empty.sh" "$folder_path")"; then #folder_path has files & ignore _src
+                echo "___$(underline "$folder_name")___"
+
+                for file in "$folder_path"*; do #`*` for all items within the folder_path
+                    "$src/helpers/name_from_path.sh" "$file"
                 done
             fi
         done
@@ -90,22 +95,22 @@ ${name}() {
         matched=false
 
         for folder in "$base"/*/; do
-            if ! "$(./helpers/folder_empty.sh "$folder")"; then #folder has files
+            if ! "$("$src/helpers/folder_empty.sh" "$folder")"; then #folder has files
                 for file in "$folder"*; do
-                    if [ "$name" = "$(./helpers/name_from_path.sh "$file")" ] && ! $matched; then
+                    if [ "$name" = "$("$src/helpers/name_from_path.sh" "$file")" ] && ! $matched; then
 
-                        new_name="${file%/*}/<DISABLED> $(./helpers/name_from_path.sh -e "$file")"
+                        new_name="${file%/*}/<DISABLED> $("$src/helpers/name_from_path.sh" -e "$file")"
                         mv "$file" "$new_name"
 
                         matched=true #indicate that a command was removed
+
+                        alias "$name"="" #temporarily removes the command from session
                     fi
                 done
             fi
         done
 
-        if ! $matched; then
-            echo "$name script does not exist"
-        fi
+        ! $matched && "$name script does not exist"
     }
 
     enable() { #removes `<DISABLED> ` from the start of the target script file
@@ -113,9 +118,9 @@ ${name}() {
         matched=false
 
         for folder in "$base"/*/; do
-            if ! "$(./helpers/folder_empty.sh "$folder")"; then #folder has files
+            if ! "$("$src/helpers/folder_empty.sh" "$folder")"; then #folder has files
                 for file in "$folder"*; do
-                    filename="$(./helpers/name_from_path.sh "$file")"
+                    filename="$("$src/helpers/name_from_path.sh" "$file")"
 
                     if [ "$name" = "$filename" ] && ! $matched; then #already enabled
                         echo "$name already enabled"
@@ -125,7 +130,7 @@ ${name}() {
                     if [ "${filename:0:11}" = "<DISABLED> " ]; then #file is disabled
                         script_name="${filename:11}"
 
-                        script_name_with_extension="$(./helpers/name_from_path.sh -e "$file")"
+                        script_name_with_extension="$("$src/helpers/name_from_path.sh" -e "$file")"
                         script_name_with_extension="${script_name_with_extension:11}" #remove `<DISABLED> ` from start of file
 
                         if [ "$script_name" = "$name" ]; then #target found
@@ -148,12 +153,12 @@ ${name}() {
         matched=false
 
         for folder in "$base"/*/; do
-            if ! "$(./helpers/folder_empty "$folder")"; then #folder has files
+            if ! "$("$src/helpers/folder_empty" "$folder")"; then #folder has files
                 for file in "$folder"*; do
-                    if [ "$name" = "$(./helpers/name_from_path.sh "$file")" ] && ! $matched; then
+                    if [ "$name" = "$("$src/helpers/name_from_path.sh" "$file")" ] && ! $matched; then
 
                         rm "$file";
-                        if "$(./helpers/folder_empty.sh "$folder")"; then #remove folder if empty after script removed
+                        if "$("$src/helpers/folder_empty.sh" "$folder")"; then #remove folder if empty after script removed
                             rm -r "$folder"
                         fi
 
@@ -176,17 +181,20 @@ ${name}() {
     #* COMMANDS DEFINED
     called=false #check if a command was executed
     # Help
-    [ -z "$1" ] || [ "$1" = '--help' ] || [ "$1" = 'help' ] || [ "$1" = '-h' ] && help && called=true
+    [ -z "$1" ] || [ "$1" = '--help' ] || [ "$1" = 'help' ] || [ "$1" = '-h' ] && called=true && help
 
     # List - scripts list
-    [ "$1" = 'list' ] || [ "$1" = 'ls' ] && list && called=true
+    [ "$1" = 'list' ] || [ "$1" = 'ls' ] && called=true && list
+
+    # Edit
+    [ "$1" = 'edit' ] && shift && edit "$@"
 
     # Disable & enable
-    [ "$1" = 'disable' ] && disable "$@" && called=true
-    [ "$1" = 'enable' ] && enable "$@" && called=true
+    [ "$1" = 'disable' ] && called=true && shift && disable "$@"
+    [ "$1" = 'enable' ] && called=true && shift && enable "$@"
 
     # Uninstall
-    [ "$1" = 'uninstall' ] && uninstall && called=true
+    [ "$1" = 'uninstall' ] && called=true && uninstall
 
     # Add - scripts add <name> <language>
     if [ "$1" = 'add' ]; then

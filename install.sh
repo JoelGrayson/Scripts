@@ -9,30 +9,44 @@
 
 main() {
     base="$HOME/scripts"
-    [ -d "$base" ] && echo "There is already a folder named $base. Please remove or rename it before installing scripts" && return 1
+    [ -d "$base" ] && echo "There is already a folder named $base. Please remove or rename it before installing scripts." && return 1
 
     mkdir "$base"
 
     # Transfer to src
-    mkdir "$src"
     src="$base/_src"
-    cp scripts.sh startup.sh helpers "$src"
+    mkdir "$src"
+    cp scripts.sh startup.sh "$src"
+    cp -R helpers "$src"
+    cp -R languages "$src"
+
+    # for f in "$src"/helpers/*; do #add permission to execute helpers
+    #     chmod +x "$f"
+    # done
+
+    # Allow helpers & languages to be called
+    chmod +x "$src/helpers/folder_empty.sh"
+    chmod +x "$src/helpers/name_from_path.sh"
+    chmod +x "$src/languages/j_create.sh"
+    chmod +x "$src/languages/remove_cursor.js"
 
     # execute for current shell
     source "$src/scripts.sh"
     source "$src/startup.sh" 
 
-    # Add sourcing startup to rc file for future sessions
-    case "$(echo "$0")" in #support for different shells
-        zsh|/usr/local/bin/zsh) echo "source '$src/scripts.sh'" >> ~/.zshrc ;;
-        bash) echo "source '$src/startup.sh'" >> ~/.bashrc ;;
-        csh) echo "source '$src/startup.sh'" >> ~/.cshrc ;;
-        tcsh) echo "source '$src/startup.sh'" >> ~/.tcshrc ;;
-        dash) echo "source '$src/startup.sh'" >> ~/.profile ;;
-        sh) echo "source '$src/startup.sh'" >> ~/.profile ;;
-        *) echo "Unknown shell. This only supports zsh, bash, and fish."
-    esac
-    
+    # Add sourcing startup to shell rc file for future sessions
+    note="""
+# Activate 'scripts' command
+[ -d '$base' ] && [ -d '$src' ] && source '$src/scripts.sh' || return 0  #only activate if '$src' folder exists
+"""
+
+    [ -e ~/.zshrc ] && echo "$note" >> ~/.zshrc
+    [ -e ~/.bashrc ] && echo "$note" >> ~/.bashrc
+    [ -e ~/.cshrc ] && echo "$note" >> ~/.cshrc
+    [ -e ~/.tcshrc ] && echo "$note" >> ~/.tcshrc
+
+    echo "Successfully installed \`scripts\`"
+    return 0
 }
 
 main "$@"
