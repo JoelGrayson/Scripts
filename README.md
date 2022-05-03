@@ -1,5 +1,7 @@
 # Installation
-source install.sh
+```bash
+curl http://localhost:8080/install.sh | bash
+```
 
 
 # Commands
@@ -12,7 +14,7 @@ scripts enable <name>
 scripts edit <name>
 
 
-<language> - sh (bash), zsh, js (node), py (python3)
+<language> - bash, zsh, node, py (python3)
 
 scripts disable <name>
     Renames `script.sh` to `<disabled> script.sh`
