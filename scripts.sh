@@ -8,14 +8,9 @@ scripts() {
     base="$HOME/scripts"
     src="$base/_src"
 
-    #* HELPER FUNCTIONS
-    underline() { #str -> ___s_t_r___ (underline and surround with ___)
-        echo "___\e[4m$1\e[0m___" #surround with POSIX chars
-    }
-
     #* LOCAL FUNCTIONS
     help() {
-        echo "$(underline "Scripts")
+        echo "$("$src/helpers/underline.sh" "Scripts")
 Usage: scripts <command>
 
 Best Commands:
@@ -30,7 +25,7 @@ Other Commands:
    disable <name>          Temporarily disable a command
    version                 Show version when installed
    languages               Shows all available languages
-   languages add <name>    Add configuration for another language (in .j file)
+   languages add <name>    Add configuration for another language (in .templ file)
    languages remove <name> Removes support for a language
    languages list          Shows all available languages
 "
@@ -43,9 +38,8 @@ Other Commands:
 
         [ -z "$language" ] && language="$default_language" #use default if not passed in
 
-
-        # Check if language exists as .j file
-        if ! [ -e "$src/languages/templates/$language.j" ]; then
+        # Check if language exists as .templ file
+        if ! [ -e "$src/languages/templates/$language.templ" ]; then
             echo "Unknown language: $language. Please use one of the following languages"
             list_languages
             return 1
@@ -73,7 +67,7 @@ Other Commands:
             folder_name=$(echo "$folder_path" | awk -F '/' '{ print $(NF-1) }') #get last in between `/`
 
             if [ "$folder_name" != '_src' ] && ! "$("$src/helpers/folder_empty.sh" "$folder_path")"; then #folder_path has files & ignore _src
-                underline "$folder_name"
+                "$src/helpers/underline.sh" "$folder_name"
 
                 for file in "$folder_path"*; do #`*` for all items within the folder_path
                     "$src/helpers/name_from_path.sh" "$file"
@@ -170,27 +164,6 @@ unalias $name" > "$temp_file_name"
         fi
     }
 
-    # Language support
-    list_languages() {
-        underline Languages
-        for f in "$src"/languages/templates/*.j; do
-            echo "${f%*.j}" | awk -F '/' '{print $NF}'
-        done
-    }
-
-    add_language() {
-        name="$1"
-        filename="$src/languages/templates/$name.j"
-        touch "$filename"
-        vim "$filename"
-    }
-
-    remove_language() {
-        name="$1"
-        filename="$src/languages/templates/$name.j"
-        [ -e "$filename" ] && rm "$filename" && echo "Removed $name.j" || echo "$name.j does not exist in $src/languages/templates/"
-    }
-
     version() {
         echo "v1.0.0"
     }
@@ -219,9 +192,9 @@ unalias $name" > "$temp_file_name"
         # Invalid usage of languages
         ! $called && echo "Usage: scripts languages <command>
 
-$(underline Commands)
+$("$src/helpers/underline.sh" Commands)
 list           Shows all available languages
-add <name>     Add configuration for another language (in .j file)
+add <name>     Add configuration for another language (in .templ file)
 remove <name>  Removes support for a language
 " && return 1 || return 0
     fi
