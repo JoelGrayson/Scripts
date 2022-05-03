@@ -39,7 +39,7 @@ main() {
     add_to_rc_file() {
         f="$1"
         if [ -e "$f" ]; then #file exists, so add to it
-            if ! grep -q """source '$HOME/scripts/_src/startup.sh'""" ~/.zshrc; then #Only add note to script if it does not already have it
+            if ! grep -q """source '$HOME/scripts/_src/startup.sh'""" "$f"; then #Only add note to script if it does not already have it
                 # Does not have note, so add it
                 echo "$note" >> "$f"
             fi

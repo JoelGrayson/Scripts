@@ -3,6 +3,7 @@
 - [ ] Edit method
 - [ ] Uninstall method
 - [ ] Install script
+- [ ] Update method (pulls from source)
 - [ ] Make sure all scripts all aliased at terminal startup
 - [ ] Default add language is bash
 
@@ -14,8 +15,8 @@
 - [x] Disable method
 
 # Issues
-- [ ] `scripts list` throws error for empty scripts directory except _src
+- [x] `scripts list` throws error for empty scripts directory except _src
 - [ ] Permissions add (chmod +x)
-- [ ] .j files do not work if {{CURSOR}} is character 0
+- [x] .j files do not work if {{CURSOR}} is character 0
 - [ ] Make sure `scripts` can be run immediately after installation (not in next session only)
 

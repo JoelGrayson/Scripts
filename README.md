@@ -1,12 +1,5 @@
 # Installation
-Download from a source and run such as:
-```sh
-curl 'https://www.joelgrayson.com/scripts/scripts.sh' | bash
-```
-or
-```sh
-brew install scripts
-```
+source install.sh
 
 
 # Commands

@@ -4,7 +4,7 @@
 
 scripts() {
     #* HELPER VARIABLES
-    default_language="sh"
+    default_language="bash"
     base="$HOME/scripts"
     src="$base/_src"
 
@@ -18,25 +18,43 @@ scripts() {
         echo "$(underline "Scripts")
 Usage: scripts <command>
 
-Commands:
+Best Commands:
    list                    Show all commands
    add <name> <language>   Create your own command
    remove <name>           Remove a command
    edit <name>             Edit your command
+
+Other Commands:
+   help                    Display this message
    enable <name>           Enable a disabled command
    disable <name>          Temporarily disable a command
+   version                 Show version when installed
    languages               Shows all available languages
    languages add <name>    Add configuration for another language (in .j file)
-   version                 Show version when installed
+   languages remove <name> Removes support for a language
+   languages list          Shows all available languages
 "
     }
 
     add() {        
         name="$1"
         language="$2"
+        echo "Adding $name of language $language"
 
-        mkdir -p "$base/$language" #-p so only creates dir if not already exists
+        [ -z "$language" ] && language="$default_language" #use default if not passed in
+
+
+        # Check if language exists as .j file
+        if ! [ -e "$src/languages/templates/$language.j" ]; then
+            echo "Unknown language: $language. Please use one of the following languages"
+            list_languages
+            return 1
+        fi
+
+        # Create directory if not already exists
+        mkdir -p "$base/$language"
         
+        # Create file
         filename="$base/$language/$name" #no file extension for simplicity
         [ -e "$filename" ] && echo "$name already exists" && return 1 #do not allow already file exists
         
@@ -186,7 +204,7 @@ unalias $name" > "$temp_file_name"
     [ "$1" = 'list' ] || [ "$1" = 'ls' ] && called=true && list
 
     # Edit
-    [ "$1" = 'edit' ] && shift && edit "$@"
+    [ "$1" = 'edit' ] && called=true && shift && edit "$@"
 
     # Disable & enable
     [ "$1" = 'disable' ] && called=true && shift && disable "$@"
@@ -213,11 +231,7 @@ remove <name>  Removes support for a language
     if [ "$1" = 'add' ]; then
         if [ "$2" != "" ]; then #<name> exists
             called=true
-            if [ "$3" != "" ]; then #<language> included
-                add "$2" "$3"
-            else #use default language
-                add "$2" "$default_language"
-            fi
+            add "$2" "$3"
         else
             echo -e "Please include the script's name and optionally language.
 scripts add <name> <language>"
