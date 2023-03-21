@@ -4,9 +4,10 @@
 
 scripts() {
     #* HELPER VARIABLES
-    default_language="bash"
+    default_language="plain"
     base="$HOME/scripts"
     src="$base/_src"
+    languages="$src/languages/languages.sh"
 
     #* LOCAL FUNCTIONS
     help() {
@@ -34,14 +35,13 @@ Other Commands:
     add() {        
         name="$1"
         language="$2"
-        echo "Adding $name of language $language"
-
+        
         [ -z "$language" ] && language="$default_language" #use default if not passed in
 
         # Check if language exists as .templ file
         if ! [ -e "$src/languages/templates/$language.templ" ]; then
             echo "Unknown language: $language. Please use one of the following languages"
-            list_languages
+            "$languages" list
             return 1
         fi
 
@@ -52,7 +52,7 @@ Other Commands:
         filename="$base/$language/$name" #no file extension for simplicity
         [ -e "$filename" ] && echo "$name already exists" && return 1 #do not allow already file exists
         
-        "$src/languages/j_create.sh" "$filename" "$language" "$name"
+        "$language" run "$filename" "$language" "$name"
 
         source "$filename" #temporarily source for current session
     }
@@ -185,9 +185,9 @@ unalias $name" > "$temp_file_name"
 
     # Languages
     if [ "$1" = 'languages' ]; then
-        [ -z "$2" ] || [ "$2" = 'list' ] || [ "$2" = 'ls' ] && called=true && list_languages
-        [ "$2" = 'add' ] && [ "$3" != '' ] && called=true && shift 2 && add_language "$@"
-        [ "$2" = 'remove' ] || [ "$2" = 'rm' ] && [ "$3" != '' ] && called=true && shift 2 && remove_language "$@"
+        [ -z "$2" ] || [ "$2" = 'list' ] || [ "$2" = 'ls' ] && called=true && "$languages" list
+        [ "$2" = 'add' ] && [ "$3" != '' ] && called=true && shift 2 && "$languages" add "$@"
+        [ "$2" = 'remove' ] || [ "$2" = 'rm' ] && [ "$3" != '' ] && called=true && shift 2 && "$languages" remove "$@"
         
         # Invalid usage of languages
         ! $called && echo "Usage: scripts languages <command>

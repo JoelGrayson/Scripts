@@ -30,7 +30,7 @@ languages() {
 
         echo "($line_number, $char_number)"
     }
-    
+
     run() {
         [ -z "$1" ] || [ "$1" = 'help' ] && echo "j_create <filename> <language> <script name>" && return 0 #no arguments
         
@@ -65,11 +65,13 @@ languages() {
     }
 
     add() {
-        name="$1"
+        # eg: add one two three
+        for name in "$@"; do #loop through added names
+            filename="$src/languages/templates/$name.templ"
+            touch "$filename"
+            vim "$filename"
+        done
 
-        filename="$src/languages/templates/$name.templ"
-        touch "$filename"
-        vim "$filename"
     }
 
     remove() {
@@ -91,6 +93,7 @@ languages() {
     [ "$1" = 'list' ] || [ "$1" = 'ls' ] && called=true && list
     [ "$1" = 'add' ] || [ "$1" = 'new' ] && called=true && shift && add "$@"
     [ "$1" = 'remove' ] || [ "$1" = 'rm' ] && called=true && shift && remove "$@"
+    [ "$1" = 'run' ] && called=true && shift && run "$@"
 
     ! $called && echo "Invalid command: $1" && return 1
 }

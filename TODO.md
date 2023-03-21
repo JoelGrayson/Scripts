@@ -1,4 +1,10 @@
 # New Features
+
+- [ ] find-file method
+        Rm:
+        Remove find-file name
+        Remove find-file <DISABLED> name
+
 - [ ] Has method
 - [ ] Edit method
 - [ ] Uninstall method
@@ -19,4 +25,10 @@
 - [ ] Permissions add (chmod +x)
 - [x] .j files do not work if {{CURSOR}} is character 0
 - [ ] Make sure `scripts` can be run immediately after installation (not in next session only)
+- [ ] Underline ASCII not working
+Method
+find-file
+Rm:
+Remove find-file name
+Remove find-file <DISABLED> name
 
