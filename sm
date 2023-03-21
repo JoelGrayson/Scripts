@@ -1,0 +1,56 @@
+#!/bin/bash
+
+BASE="$HOME/scriptmanager"
+
+get_command_name() {
+    # Get commandName from user
+    commandName="$1"
+    if [[ -z "$commandName" ]]; then
+        echo -n 'Command name: '
+        read -r commandName
+    fi
+    [[ -z "$commandName" ]] && exit 1
+    filename="$BASE/$commandName"
+}
+
+if [[ -z $1 ]]; then #list operations
+    echo '___Operations___'
+    echo 'sm new {command name (cmd)}'
+    echo 'sm edit {cmd}'
+    echo 'sm delete {cmd}'
+    echo 'sm list'
+    echo 'sm download {cmd}'
+    echo 'sm publish {cmd}'
+    echo
+    echo 'You can include folders in the command names.'
+
+elif [[ "$1" == "new" || "$1" == "n" ]]; then
+    get_command_name "$2"
+    # template="$3"
+
+    touch "$filename"
+    # Add boilerplate code
+    [[ -z "$(cat $filename)" ]] || { echo "The command already exists."; exit 1; }
+    printf '#!/bin/bash\n\n\n' > "$filename"
+    echo "$filename has been created"
+    vim "+call cursor(2, 0)" "$filename"
+    chmod +x "$filename"
+
+elif [[ "$1" == "edit" || "$1" == "e" ]]; then
+    get_command_name "$2" 
+    vim "$filename"
+    echo "Edited $commandName"
+
+elif [[ "$1" == "delete" || "$1" == "rm" || "$1" == "del" || "$1" == "d" ]]; then
+    get_command_name "$2"
+    rm "$filename"
+    echo "Deleted $commandName"
+
+elif [[ "$1" == "list" || "$1" == "ls" || "$1" == "l" ]]; then
+    ls -p "$BASE" | grep -v /
+    for d in "$BASE"/*/; do # include all subfolders
+        [[ "$d" != "$BASE/_internals/" ]] && echo "___${d}___" && ls "$d"
+    done
+else
+    echo "Unknown command $1"
+fi

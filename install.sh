@@ -1,59 +1,56 @@
 #!/bin/bash
 
-: ' Steps
-* Create a ~/scripts folder
-* Create the scripts command
-* Execute startup in this shell
-* Make sure startup is executed when zsh starts up
-'
+# ABOUT: install by running: bash -c "$(curl -L https://scriptmanager.io/install)"
 
-main() {
-    base="$HOME/scripts"
-    [ -d "$base" ] && echo "There is already a folder named $base. Please remove or rename it before installing scripts." && return 1
+BASE="$HOME/scriptmanager"
 
-    mkdir "$base"
-
-    # Transfer to src
-    src="$base/_src"
-    mkdir "$src"
-    cp scripts.sh startup.sh uninstall.sh "$src"
-    cp -R helpers "$src"
-    cp -R languages "$src"
-
-    # Allow helpers & languages to be called
-    for f in "$src"/helpers/*; do
-        chmod +x "$f"
-    done
-    for f in "$src"/languages/*.{sh,js}; do
-        chmod +x "$f"
-    done
-
-    
-    note="""
-# Activate \`scripts\` command
-[ -d '$base' ] && [ -d '$src' ] && source '$src/startup.sh' || return 0  #only activate if '$src' folder exists
+# Add to rc files
+rc_string="""
+# BEGIN Script Manager
+export PATH=\"\$PATH:/$BASE\"
+export PATH=\"\$PATH:/$BASE/_internals/exposed\"
+for d in \"$BASE\"/*/; do # include all subfolders
+    [[ "\$d" != "$BASE/_internals/" ]] && export PATH="\$PATH:$d" #excludes _internals folder which has internals
+done
+# END Script Manager
 """
-    
-    eval "$note" # execute for current shell
 
-    add_to_rc_file() {
-        f="$1"
-        if [ -e "$f" ]; then #file exists, so add to it
-            if ! grep -q """source '$HOME/scripts/_src/startup.sh'""" "$f"; then #Only add note to script if it does not already have it
-                # Does not have note, so add it
-                echo "$note" >> "$f"
-            fi
-        fi
-    }
+if [[ "$(which $SHELL)" == '/bin/zsh' ]]; then
+    echo "$rc_string" >> ~/.zshrc
+else
+    echo "$rc_string" >> ~/.bashrc
+fi
 
-    # Add sourcing startup to shell rc file for future sessions
-    add_to_rc_file ~/.zshrc
-    add_to_rc_file ~/.bashrc
-    add_to_rc_file ~/.cshrc
-    add_to_rc_file ~/.tcshrc
+# Create folder
+mkdir "$BASE"
+mkdir "$BASE/_internals" #this is 
+mkdir "$BASE/_internals/exposed" #this is 
+cat <<EOF > "$BASE/_internals/uninstall-sm"
+#!/bin/bash
 
-    echo "Successfully installed \`scripts\`"
-    return 0
-}
+# Uninstall script manager
 
-main "$@"
+# Confirmation
+echo -n "Are you sure you want to uninstall script manager (y/n)? "
+read -r confirmation
+if [[ "\$confirmation" != "y" && "\$confirmation" != "yes" ]]; then
+    echo 'Exiting because you did not type "y" or "yes"'
+    echo 'Script manager has not been uninstalled.'
+fi
+
+# Uninstalling because passed confirmation
+rm -rf "$BASE"
+echo "Please remove the script manager lines from your rc file (~/.bashrc or ~/.zshrc)."
+EOF
+
+echo "v1.0" > "$BASE/_internals/version.txt"
+cat <<EOF > "$BASE/_internals/ABOUT.md"
+# Script Manager
+Easily manage scripts (commands) for shell sessions in MacOS.
+EOF
+
+# # Download script manager
+# curl -L https://scriptmanager.io/install/sm --output "$BASE/_internals/exposed/sm"
+# cp "$BASE/_internals/exposed/sm" "$BASE/_internals/exposed/scriptmanager" # sm = scriptmanager
+
+# chmod +x "$BASE/_internals/"* #add permissions

@@ -1,33 +1,32 @@
-# About
-Scripts is a script manager that allows 
+# Script Manager
+Easily manage scripts (commands) for shell sessions in MacOS.
 
-
-# Installation
+## Installation
 ```bash
-curl -s http://localhost:8080/install.sh | bash
+bash -c "$(curl -L http://scriptmanager.io/install.sh)"
 ```
 
 
+## Documentation
+sm list
+sm add <name> <language>
+sm remove <name>
+sm has <name>
+sm disable <name>
+sm enable <name>
+sm edit <name>
 
-
-# Commands
-scripts list
-scripts add <name> <language>
-scripts remove <name>
-scripts has <name>
-scripts disable <name>
-scripts enable <name>
-scripts edit <name>
-
-scripts disable <name>
+sm disable <name>
     Renames `script.sh` to `<disabled> script.sh`
-scripts enable <name>
+sm enable <name>
     Renames `<disabled> script.sh` to `script.sh`
 
-scripts get <var>
-scripts set <var> <new value>
+sm get <var>
+sm set <var> <new value>
 
-### Config Values
+## Config Values
 * editor - path to editor
+    * vim
+    * vscode
+    * sublime
 * default_language
-
