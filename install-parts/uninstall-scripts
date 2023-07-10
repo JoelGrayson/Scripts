@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Uninstall scripts
+
+# Confirmation
+echo -n "Are you sure you want to uninstall scripts (y/n)? "
+read -r confirmation
+if [[ "\$confirmation" != "y" && "\$confirmation" != "yes" ]]; then
+    echo 'Exiting because you did not type "y" or "yes"'
+    echo 'Scripts has not been uninstalled.'
+    exit 1
+else
+    echo "Uninstalling scripts..."
+    rm -rf "$HOME/scripts"
+    echo "Please remove the scripts lines from your rc file (~/.bashrc or ~/.zshrc)."
+fi
+

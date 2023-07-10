@@ -1,9 +1,9 @@
-# Script Manager
+# Scripts
 Easily manage scripts (commands) for shell sessions in MacOS.
 
 ## Installation
 ```bash
-bash -c "$(curl -L http://scriptmanager.io/install.sh)"
+bash -c "$(curl -L http://scripts.io/install.sh)"
 ```
 
 

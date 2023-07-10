@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE="$HOME/scriptmanager"
+BASE="$HOME/scripts"
 
 get_command_name() {
     # Get commandName from user
@@ -13,14 +13,14 @@ get_command_name() {
     filename="$BASE/$commandName"
 }
 
-if [[ -z $1 ]]; then #list operations
+if [[ -z $1 || $1 == 'help' || $1 == '-h' || $1 == '--help' ]]; then #list operations
     echo '___Operations___'
-    echo 'sm new {command name (cmd)}'
-    echo 'sm edit {cmd}'
-    echo 'sm delete {cmd}'
-    echo 'sm list'
-    echo 'sm download {cmd}'
-    echo 'sm publish {cmd}'
+    echo 'scripts new {command name (cmd)}'
+    echo 'scripts edit {cmd}'
+    echo 'scripts delete {cmd}'
+    echo 'scripts list'
+    echo 'scripts download {cmd}'
+    echo 'scripts publish {cmd}'
     echo
     echo 'You can include folders in the command names.'
 
@@ -54,3 +54,4 @@ elif [[ "$1" == "list" || "$1" == "ls" || "$1" == "l" ]]; then
 else
     echo "Unknown command $1"
 fi
+
